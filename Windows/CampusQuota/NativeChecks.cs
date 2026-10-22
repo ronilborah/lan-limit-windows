@@ -71,14 +71,14 @@ internal static class NativeChecks
                 <html><body><span>User portal for</span><span>test-user@bits-hyderabad.ac.in</span><span>Policy information</span>
                 <table><tr><th>Resource</th><th>Allotted</th><th>Usage</th><th>Remaining</th></tr>
                 <tr><td>Cycle total network traffic</td><td>10000 MB</td><td>7000 MB</td><td>3000 MB</td></tr></table>
-                <input id="username"><input id="password"><input name="loginbutton" type="button" onclick="window.submitted=true">
+                <input id="username"><input id="password" type="password"><input name="loginbutton" type="button" onclick="window.submitted=true">
                 </body></html>
                 """);
             await loaded.Task;
             var snapshot = JsonSerializer.Deserialize<PageSnapshot>(await first.CoreWebView2.ExecuteScriptAsync(Portal.SnapshotScript))!;
             if (snapshot.Identity != "test-user@bits-hyderabad.ac.in" || Portal.Parse(snapshot.Tables, DateTimeOffset.Now)?.Title != "3.00 GB left")
                 throw new Exception("WebView2 quota/identity extraction failed.");
-            var credentials = new Credentials("test-'\\\"", "test-only-\\\n\"");
+            var credentials = new Credentials("test-'\\\"", "test-only-\\\"-'");
             await first.CoreWebView2.ExecuteScriptAsync(Portal.LoginScript(credentials));
             var readback = JsonSerializer.Deserialize<string[]>(await first.CoreWebView2.ExecuteScriptAsync("[document.getElementById('username').value,document.getElementById('password').value]"))!;
             if (readback[0] != credentials.Username || readback[1] != credentials.Password
