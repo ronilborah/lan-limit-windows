@@ -1,0 +1,41 @@
+name: Build Windows app
+on:
+  push:
+    paths: ['Windows/**', 'build-windows.ps1', '.github/workflows/build-windows.yml']
+  pull_request:
+    paths: ['Windows/**', 'build-windows.ps1', '.github/workflows/build-windows.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime: [win-x64, win-arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check and publish self-contained app
+        shell: pwsh
+        run: ./build-windows.ps1 -Runtime '${{ matrix.runtime }}'
+      - name: Windows native checks
+        if: matrix.runtime == 'win-x64'
+        shell: pwsh
+        run: |
+          $process = Start-Process 'dist/CampusQuota-win-x64/CampusQuota.exe' -ArgumentList '--self-test' -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+            if (Test-Path windows-check-failure.txt) { Get-Content windows-check-failure.txt }
+            throw 'Windows native checks failed'
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CampusQuota-${{ matrix.runtime }}
+          path: dist/CampusQuota-${{ matrix.runtime }}.zip
+          if-no-files-found: error

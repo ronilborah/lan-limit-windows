@@ -1,0 +1,13 @@
+.build/
+dist/
+releases/
+.DS_Store
+*.log
+.env
+.env.*
+*.p12
+*.mobileprovision
+*.keychain-db
+health.json
+**/bin/
+**/obj/
